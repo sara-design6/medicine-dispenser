@@ -547,39 +547,41 @@ void setup() {
   tft.setCursor(20, 100);
   tft.println("Starting WiFi...");
 
-  // --- WIFI SETUP ---
-  // Try to connect to Wokwi-GUEST (Simulated Router)
-  WiFi.begin(SSID_WOKWI, PASS_WOKWI);
+  // --- WIFI SETUP (REAL HARDWARE MODE) ---
   
-  // Also set up SoftAP for real world fallback
-  WiFi.softAP(AP_SSID, AP_PASS);
-
-  int retries = 0;
-  while (WiFi.status() != WL_CONNECTED && retries < 10) {
-    delay(500);
-    Serial.print(".");
-    retries++;
-  }
+  // 1. Disconnect any previous connections
+  WiFi.disconnect();
   
-  if (WiFi.status() == WL_CONNECTED) {
+  // 2. Set mode to Access Point ONLY (Saves power, prevents searching)
+  WiFi.mode(WIFI_AP);
+  
+  // 3. Create the Network
+  // SSID: PillDispenser, Password: 12345678
+  bool result = WiFi.softAP(AP_SSID, AP_PASS);
+  
+  if (result) {
     wifiConnected = true;
-    Serial.println("\nWiFi Connected!");
-    Serial.print("IP: "); Serial.println(WiFi.localIP());
+    Serial.println("\nSUCCESS: Access Point Started");
+    Serial.print("Network Name: "); Serial.println(AP_SSID);
+    Serial.print("IP Address: "); Serial.println(WiFi.softAPIP());
   } else {
-    Serial.println("\nWiFi Station Failed (Using SoftAP)");
-    Serial.print("AP IP: "); Serial.println(WiFi.softAPIP());
-    // Assume connected for AP mode
-    wifiConnected = true; 
+    Serial.println("ERROR: Failed to start Access Point");
   }
 
   // --- SERVER ROUTES ---
   server.on("/status", HTTP_GET, handleStatus);
   server.on("/get-logs", HTTP_GET, handleGetLogs);
   server.on("/save-config", HTTP_POST, handleSaveConfig);
+  // Handle CORS Pre-flight for web apps
   server.onNotFound([]() {
-    if (server.method() == HTTP_OPTIONS) handleOptions();
-    else server.send(404, "text/plain", "Not Found");
+    if (server.method() == HTTP_OPTIONS) {
+      server.sendHeader("Access-Control-Allow-Origin", "*");
+      server.send(204);
+    } else {
+      server.send(404, "text/plain", "Not Found");
+    }
   });
+  
   server.begin();
   Serial.println("HTTP server started");
 
@@ -629,4 +631,5 @@ void loop() {
   // functions from your original code. They work perfectly fine with this structure.
   
   delay(10);
+
 }
