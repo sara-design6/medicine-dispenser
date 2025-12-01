@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Pill Dispenser</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+
+     <div id="login-overlay" class="login-screen">
+      <div class="login-card">
+        <h2>Welcome Back</h2>
+        <p>Enter your PIN to access pill data</p>
+        <input type="password" id="login-pin" maxlength="4" placeholder="----" />
+        <p id="login-error" class="error-text"></p>
+        <button class="btn btn-primary full-width" id="btn-login">Unlock App</button>
+      </div>
+    </div>
+
+    <header>
+      <div class="header-left">
+        <h1>Pill Schedule</h1>
+        <p>Tap segments to schedule doses</p>
+      </div>
+      
+      <div class="header-actions">
+        <button class="icon-btn" id="btn-wifi" aria-label="Connection">
+          <div class="status-dot" id="wifi-status-dot"></div>
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0114.08 0M1.42 9a16 16 0 0121.16 0M8.53 16.11a6 6 0 016.95 0M12 20h.01"></path></svg>
+        </button>
+        <button class="icon-btn" id="btn-logs" aria-label="View Logs">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+        </button>
+        <button class="icon-btn" id="btn-settings" aria-label="Settings">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <div class="dispenser-wrapper">
+        <div class="center-hub" id="hub-display">
+          <span class="hub-label"></span>
+          <h3 class="hub-value">--</h3>
+          <div class="hub-status">Select</div>
+        </div>
+        <svg id="dispenser-svg" viewBox="0 0 500 500"></svg>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-header">
+          <h3>Schedule Summary</h3>
+          <button class="text-btn" id="btn-clear" style="display: none">Clear All</button>
+        </div>
+        <p id="summary-text">No pills scheduled yet.</p>
+        <div id="summary-list" class="summary-list"></div>
+      </div>
+    </main>
+
+    <button class="fab-save" id="btn-save" disabled>
+      <span class="btn-text">Sync to Device</span>
+    </button>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Meal Timings</h3>
+          <button class="close-btn" id="close-settings">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Breakfast</label>
+            <input type="time" id="time-breakfast" value="08:00" />
+          </div>
+          <div class="form-group">
+            <label>Lunch</label>
+            <input type="time" id="time-lunch" value="13:00" />
+          </div>
+          <div class="form-group">
+            <label>Dinner</label>
+            <input type="time" id="time-dinner" value="20:00" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" id="btn-save-settings">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Connection/Login Modal -->
+    <div class="modal-overlay" id="wifi-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Connect to Dispenser</h3>
+          <button class="close-btn" id="close-wifi">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="helper-text">Ensure your phone is connected to the Dispenser's WiFi network.</p>
+          <div class="form-group">
+            <label>Device IP Address</label>
+            <input type="text" id="device-ip" value="192.168.4.1" placeholder="e.g. 192.168.4.1" />
+          </div>
+          <div class="form-group">
+            <label>Device Password</label>
+            <input type="password" id="device-pass" placeholder="Enter PIN if required" />
+          </div>
+          <div class="status-msg" id="connection-msg">Status: Not Connected</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" id="btn-connect-device">Check Connection</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- UPDATED LOGS / ANALYTICS MODAL -->
+    <div class="modal-overlay" id="logs-modal">
+      <div class="modal modal-large">
+        <div class="modal-header">
+          <div class="tab-switcher">
+            <button class="tab-btn active" data-tab="logs">Activity Logs</button>
+            <button class="tab-btn" data-tab="analytics">Analytics</button>
+          </div>
+          <button class="close-btn" id="close-logs">&times;</button>
+        </div>
+        
+        <div class="modal-body no-pad" id="view-logs">
+          <div class="toolbar">
+             <span id="log-stats">0 entries stored</span>
+             <button class="text-btn" id="btn-refresh-logs">Sync from ESP32</button>
+          </div>
+          <div class="log-console" id="log-container">
+            <div class="log-entry placeholder">Connecting to local database...</div>
+          </div>
+        </div>
+
+        <!-- ... inside logs-modal ... -->
+        <div class="modal-body" id="view-analytics" style="display:none; background: #fff; border-radius: 0 0 12px 12px; padding: 20px;">
+            
+            <!-- New Navigation Controls -->
+            <div class="analytics-nav">
+                <button class="nav-arrow" id="chart-prev">&larr;</button>
+                <span class="nav-label" id="chart-date-range">Loading...</span>
+                <button class="nav-arrow" id="chart-next">&rarr;</button>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="complianceChart"></canvas>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-box">
+                    <h4>Adherence Rate</h4>
+                    <span id="stat-adherence">--%</span>
+                </div>
+                <div class="stat-box">
+                    <h4>Total Missed</h4>
+                    <span id="stat-missed">--</span>
+                </div>
+            </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
